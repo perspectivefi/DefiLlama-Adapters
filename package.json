@@ -29,10 +29,10 @@
     "@project-serum/anchor": "^0.26.0",
     "@solana/web3.js": "^1.87.6",
     "@supercharge/promise-pool": "^2.1.0",
-    "axios": "^1.6.5",
+    "axios": "^1.20.0",
     "bignumber.js": "^9.0.1",
     "blakejs": "^1.2.1",
-    "bn.js": "^5.2.1",
+    "bn.js": "^5.2.3",
     "borsh": "^0.7.0",
     "bs58": "^6.0.0",
     "buffer-layout": "^1.2.2",
@@ -46,11 +46,32 @@
     "limiter": "2.1.0",
     "miscreant": "^0.3.2",
     "p-limit": "^3.1.0",
-    "ws": "^8.18.3"
+    "ws": "^8.21.0"
   },
   "overrides": {},
   "description": "",
   "devDependencies": {
     "eslint": "^9.38.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@smithy/config-resolver@>=4.0.0 <4.4.0": "4.4.0",
+      "undici@>=6.0.0 <6.28.1": "6.28.1",
+      "js-yaml@>=4.0.0 <4.3.2": "4.3.2",
+      "fast-xml-parser@>=5.0.0 <5.7.0": "5.7.0",
+      "minimatch@>=3.0.0 <3.1.4": "3.1.4",
+      "ajv@>=6.0.0 <6.14.0": "6.14.0",
+      "flatted@>=3.0.0 <3.4.2": "3.4.2",
+      "brace-expansion@>=1.0.0 <1.1.21": "1.1.21",
+      "follow-redirects@>=1.0.0 <1.16.0": "1.16.0",
+      "form-data@>=4.0.0 <4.0.6": "4.0.6",
+      "form-data@>=3.0.0 <3.0.5": "3.0.5",
+      "ws@>=7.0.0 <7.5.11": "7.5.11",
+      "@opentelemetry/core@>=2.0.0 <2.8.0": "2.8.0",
+      "@humanfs/node@>=0.16.0 <0.16.8": "0.16.8"
+    }
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
