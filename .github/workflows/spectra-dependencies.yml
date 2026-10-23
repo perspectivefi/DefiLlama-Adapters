@@ -49,11 +49,16 @@ jobs:
       - name: Run Spectra adapter with strict failure detection
         env:
           TVL_LOCAL_CACHE_ROOT_FOLDER: ${{ runner.temp }}/spectra-cache
+          PR_UPDATED_AT: ${{ github.event.pull_request.updated_at }}
         # The upstream runner can exit zero with FAILED chains. Require its
         # TVL summary and reject both failure banners as well as a nonzero exit.
         run: |
           set -o pipefail
-          timeout 600s node test.js projects/spectra 2>&1 | tee "$RUNNER_TEMP/spectra-adapter.log"
+          # Use the same EVM timestamp for both revisions, behind the RPC tip.
+          # The Stellar adapter declares timetravel:false and still reads live state.
+          validation_timestamp=$(( $(date --date="$PR_UPDATED_AT" +%s) - 600 ))
+          echo "EVM validation timestamp: $validation_timestamp"
+          timeout 600s node test.js projects/spectra "$validation_timestamp" 2>&1 | tee "$RUNNER_TEMP/spectra-adapter.log"
           if grep -Eq -- '-+ (FAILED|ERROR)' "$RUNNER_TEMP/spectra-adapter.log"; then
             echo "::error::Spectra adapter reported failed chains or an error"
             exit 1
