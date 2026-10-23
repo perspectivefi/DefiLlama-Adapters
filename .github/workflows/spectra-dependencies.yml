@@ -1,0 +1,72 @@
+name: Spectra dependency validation
+
+on:
+  pull_request:
+    paths:
+      - package.json
+      - pnpm-lock.yaml
+      - .nvmrc
+      - projects/spectra/**
+      - projects/helper/chain/stellar.js
+      - .github/workflows/spectra-dependencies.yml
+
+permissions:
+  contents: read
+
+jobs:
+  spectra:
+    name: Spectra adapter / ${{ matrix.revision }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        revision: [baseline, candidate]
+    env:
+      LLAMA_DEBUG_MODE: "true"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.revision == 'baseline' && github.event.pull_request.base.sha || github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.23.4"
+          cache: pnpm
+      - name: Record revision and toolchain
+        run: |
+          git rev-parse HEAD
+          node --version
+          pnpm --version
+      - name: Install the frozen root lock without lifecycle scripts
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Lint adapter repository
+        run: pnpm run lint
+      - name: Run Spectra adapter with strict failure detection
+        env:
+          TVL_LOCAL_CACHE_ROOT_FOLDER: ${{ runner.temp }}/spectra-cache
+        # The upstream runner can exit zero with FAILED chains. Require its
+        # TVL summary and reject both failure banners as well as a nonzero exit.
+        run: |
+          set -o pipefail
+          timeout 600s node test.js projects/spectra 2>&1 | tee "$RUNNER_TEMP/spectra-adapter.log"
+          if grep -Eq -- '-+ (FAILED|ERROR)' "$RUNNER_TEMP/spectra-adapter.log"; then
+            echo "::error::Spectra adapter reported failed chains or an error"
+            exit 1
+          fi
+          if ! grep -q -- '------ TVL ------' "$RUNNER_TEMP/spectra-adapter.log"; then
+            echo "::error::Spectra adapter did not produce its TVL summary"
+            exit 1
+          fi
+      - name: Retain adapter output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spectra-adapter-${{ matrix.revision }}
+          path: ${{ runner.temp }}/spectra-adapter.log
+          if-no-files-found: warn
+          retention-days: 7
